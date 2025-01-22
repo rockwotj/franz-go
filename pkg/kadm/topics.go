@@ -34,7 +34,7 @@ func (cl *Client) ListTopicsWithInternal(
 	ctx context.Context,
 	topics ...string,
 ) (TopicDetails, error) {
-	m, err := cl.Metadata(ctx, topics...)
+	m, err := cl.metadata(ctx, false, topics, true)
 	if err != nil {
 		return nil, err
 	}

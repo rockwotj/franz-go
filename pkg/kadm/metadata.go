@@ -200,7 +200,7 @@ func int32s(is []int32) []int32 {
 // ListBrokers issues a metadata request and returns BrokerDetails. This
 // returns an error if the request fails to be issued, or an *AuthError.
 func (cl *Client) ListBrokers(ctx context.Context) (BrokerDetails, error) {
-	m, err := cl.Metadata(ctx)
+	m, err := cl.BrokerMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (cl *Client) ListBrokers(ctx context.Context) (BrokerDetails, error) {
 //
 // This returns an error if the request fails to be issued, or an *AuthErr.
 func (cl *Client) BrokerMetadata(ctx context.Context) (Metadata, error) {
-	return cl.metadata(ctx, true, nil)
+	return cl.metadata(ctx, true, nil, true)
 }
 
 // Metadata issues a metadata request and returns it. Specific topics to
@@ -224,10 +224,10 @@ func (cl *Client) Metadata(
 	ctx context.Context,
 	topics ...string,
 ) (Metadata, error) {
-	return cl.metadata(ctx, false, topics)
+	return cl.metadata(ctx, false, topics, false)
 }
 
-func (cl *Client) metadata(ctx context.Context, noTopics bool, topics []string) (Metadata, error) {
+func (cl *Client) metadata(ctx context.Context, noTopics bool, topics []string, useCache bool) (Metadata, error) {
 	req := kmsg.NewPtrMetadataRequest()
 	req.IncludeClusterAuthorizedOperations = true
 	req.IncludeTopicAuthorizedOperations = true
@@ -239,7 +239,13 @@ func (cl *Client) metadata(ctx context.Context, noTopics bool, topics []string) 
 	if noTopics {
 		req.Topics = []kmsg.MetadataRequestTopic{}
 	}
-	resp, err := req.RequestWith(ctx, cl.cl)
+	var resp *kmsg.MetadataResponse
+	var err error
+	if useCache {
+		resp, err = cl.cl.RequestCachedMetadata(ctx, req, -1)
+	} else {
+		resp, err = req.RequestWith(ctx, cl.cl)
+	}
 	if err != nil {
 		return Metadata{}, err
 	}

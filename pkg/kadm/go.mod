@@ -4,6 +4,8 @@ go 1.21
 
 toolchain go1.22.0
 
+replace github.com/twmb/franz-go => ../../
+
 require (
 	github.com/twmb/franz-go v1.18.1
 	github.com/twmb/franz-go/pkg/kmsg v1.9.0
